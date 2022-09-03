@@ -48,26 +48,7 @@ extension Parser {
     MODIFIER_LOOP: while modifierLoopCondition.evaluate(currentToken) {
       switch self.currentToken.tokenKind {
       case .privateKeyword, .fileprivateKeyword, .internalKeyword, .publicKeyword:
-        let name = self.consumeAnyToken()
-        let details: RawDeclModifierDetailSyntax?
-        if self.at(.leftParen) {
-          let lparen = self.eat(.leftParen)
-          assert(self.currentToken.isContextualKeyword("set"))
-          let detail = self.consumeIdentifier()
-          let (unexpectedBeforeRParen, rparen) = self.expect(.rightParen)
-          details = RawDeclModifierDetailSyntax(
-            leftParen: lparen,
-            detail: detail,
-            unexpectedBeforeRParen,
-            rightParen: rparen,
-            arena: self.arena
-          )
-        } else {
-          details = nil
-        }
-
-        elements.append(RawDeclModifierSyntax(
-          name: name, detail: details, arena: self.arena))
+        elements.append(self.parseAccessLevelModifier())
       case .staticKeyword:
         let staticKeyword = self.eat(.staticKeyword)
         elements.append(RawDeclModifierSyntax(
@@ -166,5 +147,64 @@ extension Parser {
     }
 
     return RawDeclModifierSyntax(name: keyword, detail: detail, arena: self.arena)
+  }
+
+  mutating func parseAccessLevelModifier() -> RawDeclModifierSyntax {
+    assert(
+      [
+        RawTokenKind.privateKeyword,
+        .fileprivateKeyword,
+        .internalKeyword,
+        .publicKeyword
+      ].contains(self.currentToken.tokenKind)
+    )
+    let name = self.consumeAnyToken()
+    let details: RawDeclModifierDetailSyntax?
+    if let lparen = self.consume(if: .leftParen) {
+      var beforeDetail: [RawTokenSyntax] = []
+      var detail: RawTokenSyntax? = nil
+      while !atAny([.eof, .rightParen]) {
+        if currentToken.isContextualKeyword("set") {
+          detail = consume(remapping: .contextualKeyword)
+          break
+        }
+        beforeDetail.append(consumeAnyToken())
+      }
+      var afterDetail: [RawTokenSyntax] = []
+      if let _ = detail {
+        while !atAny([.eof, .rightParen]) {
+          afterDetail.append(consumeAnyToken())
+        }
+      } else {
+        afterDetail = beforeDetail
+        beforeDetail = []
+      }
+      let rparen = consume(if: .rightParen) ??
+        RawTokenSyntax(missing: .rightParen, arena: arena)
+      details = RawDeclModifierDetailSyntax(
+        leftParen: lparen,
+        beforeDetail.isEmpty ? nil :
+        RawUnexpectedNodesSyntax(
+          elements: beforeDetail.map { RawSyntax($0) }, arena: arena
+        ),
+        detail: detail ?? RawTokenSyntax(
+          missing: .contextualKeyword,
+          text: arena.intern("set"),
+          arena: arena
+        ),
+        afterDetail.isEmpty ? nil :
+        RawUnexpectedNodesSyntax(
+          elements: afterDetail.map { RawSyntax($0) },
+          arena: arena
+        ),
+        rightParen: rparen,
+        arena: self.arena
+      )
+    } else {
+      details = nil
+    }
+    return RawDeclModifierSyntax(
+      name: name, detail: details, arena: self.arena
+    )
   }
 }
