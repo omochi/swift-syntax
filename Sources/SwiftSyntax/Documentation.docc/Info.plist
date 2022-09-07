@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>SwiftParser</string>
+	<string>SwiftSyntax</string>
 	<key>CFBundleDisplayName</key>
-	<string>SwiftParser</string>
+	<string>SwiftSyntax</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.apple.swift-parser</string>
+	<string>com.apple.swift-syntax</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleIconFile</key>
@@ -24,7 +24,7 @@
 	<string>0.1.0</string>
 	<key>CDAppleDefaultAvailability</key>
 	<dict>
-		<key>SwiftParser</key>
+		<key>SwiftSyntax</key>
 		<array>
 			<dict>
 				<key>name</key>

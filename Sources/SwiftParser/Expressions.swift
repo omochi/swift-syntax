@@ -349,7 +349,7 @@ extension Parser {
     _ flavor: ExprFlavor,
     forDirective: Bool
   ) -> RawExprSyntax {
-    let head = self.parsePrimaryExpression(flavor)
+    let head = self.parsePrimaryExpression()
     guard !head.is(RawMissingExprSyntax.self) else {
       return head
     }
@@ -688,7 +688,7 @@ extension Parser {
   ///     primary-expression → selector-expression
   ///     primary-expression → key-path-string-expression
   @_spi(RawSyntax)
-  public mutating func parsePrimaryExpression(_ flavor: ExprFlavor) -> RawExprSyntax {
+  public mutating func parsePrimaryExpression() -> RawExprSyntax {
     switch self.currentToken.tokenKind {
     case .integerLiteral:
       let digits = self.eat(.integerLiteral)
@@ -1076,7 +1076,7 @@ extension Parser {
     case 3:
       // position == .leadingRaw implies that we saw a `#` before the quote.
       // A multiline string literal must always start its contents on a new line.
-      // Thus we are parsing somethign like #"""#, which is not a multiline string literal but a raw literal containing a single quote.
+      // Thus we are parsing something like #"""#, which is not a multiline string literal but a raw literal containing a single quote.
       if position == .leadingRaw,
          index < text.endIndex,
          text[index] == UInt8(ascii: "#")
@@ -1085,7 +1085,7 @@ extension Parser {
         index = text.index(text.startIndex, offsetBy: quoteCount)
       }
     default:
-      // Similar two the above, we are parsing somethign like #"""""#, which is not a multiline string literal but a raw literal containing three quote.
+      // Similar two the above, we are parsing something like #"""""#, which is not a multiline string literal but a raw literal containing three quote.
       if position == .leadingRaw {
         quoteCount = 1
         index = text.index(text.startIndex, offsetBy: quoteCount)

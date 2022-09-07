@@ -73,8 +73,9 @@ let formatFile = SourceFile {
     }
 
     VariableDecl(
+      attributes: [CustomAttribute("_spi") { TupleExprElement(expression: "Testing") }],
       modifiers: [Token.public],
-      name: "_indentTrivia",
+      name: "indentTrivia",
       type: "Trivia"
     ) {
       TernaryExpr(
@@ -102,7 +103,7 @@ let formatFile = SourceFile {
       SequenceExpr {
         MemberAccessExpr(name: "newline")
         BinaryOperatorExpr("+")
-        "_indentTrivia"
+        "indentTrivia"
       }
     }
   }
@@ -132,11 +133,10 @@ private func createFormatFunctionSignature(type: SyntaxBuildableType) -> Functio
   )
 }
 
-/// Generate the _format implementation for a buildable node.
+/// Generate the format implementation for a buildable node.
 private func createBuildableNodeFormatFunction(node: Node) -> FunctionDecl {
   FunctionDecl(
-    modifiers: [Token.public],
-    identifier: .identifier("_format"),
+    identifier: .identifier("format"),
     signature: createFormatFunctionSignature(type: node.type)
   ) {
     VariableDecl(
@@ -187,12 +187,11 @@ private func createBuildableNodeFormatFunction(node: Node) -> FunctionDecl {
   }
 }
 
-/// Generate the _format implementation for a collection node.
+/// Generate the format implementation for a collection node.
 /// The implementation updates the leading trivia of the elements with their indentation.
 private func createBuildableCollectionNodeFormatFunction(node: Node) -> FunctionDecl {
   FunctionDecl(
-    modifiers: [Token.public],
-    identifier: .identifier("_format"),
+    identifier: .identifier("format"),
     signature: createFormatFunctionSignature(type: node.type)
   ) {
     if node.elementsSeparatedByNewline {
@@ -230,8 +229,7 @@ private func createBuildableCollectionNodeFormatFunction(node: Node) -> Function
 private func createTokenFormatFunction() -> FunctionDecl {
   let tokenType = SyntaxBuildableType(syntaxKind: "Token")
   return FunctionDecl(
-    modifiers: [Token.public],
-    identifier: .identifier("_format"),
+    identifier: .identifier("format"),
     signature: createFormatFunctionSignature(type: tokenType)
   ) {
     SwitchStmt(expression: MemberAccessExpr(base: "syntax", name: "tokenKind")) {

@@ -51,7 +51,7 @@ extension Parser {
   public mutating func parseDeclaration() -> RawDeclSyntax {
     if self.at(.poundIfKeyword) {
       return RawDeclSyntax(self.parsePoundIfDirective { parser in
-        var parsedDecl = parser.parseDeclaration()
+        let parsedDecl = parser.parseDeclaration()
         let semicolon = parser.consume(if: .semicolon)
         return RawMemberDeclListItemSyntax(
           decl: parsedDecl,
@@ -381,7 +381,7 @@ extension Parser {
             arena: self.arena))
         } else {
           requirement = RawSyntax(RawSameTypeRequirementSyntax(
-            leftTypeIdentifier: RawTypeSyntax(RawMissingTypeSyntax(arena: self.arena)),
+            leftTypeIdentifier: firstType,
             equalityToken: RawTokenSyntax(missing: .equal, arena: self.arena),
             rightTypeIdentifier: RawTypeSyntax(RawMissingTypeSyntax(arena: self.arena)),
             arena: self.arena
@@ -1034,7 +1034,7 @@ extension Parser {
   @_spi(RawSyntax)
   public mutating func parseDeinitializerDeclaration(_ attrs: DeclAttributes) -> RawDeinitializerDeclSyntax {
     let deinitKeyword = self.eat(.deinitKeyword)
-    let items = self.parseCodeBlock()
+    let items = self.parseOptionalCodeBlock()
     return RawDeinitializerDeclSyntax(
       attributes: attrs.attributes, modifiers: attrs.modifiers,
       deinitKeyword: deinitKeyword, body: items,

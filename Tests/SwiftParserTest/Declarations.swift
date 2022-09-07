@@ -51,6 +51,20 @@ final class DeclarationTests: XCTestCase {
       "<@NSApplicationMain T: AnyObject>",
       { $0.parseGenericParameters() }
     )
+
+    AssertParse("class T where t#^DIAG^#",
+                diagnostics: [
+                  DiagnosticSpec(message: "Expected '=' in same type requirement"),
+                  DiagnosticSpec(message: "Expected '{' to start class"),
+                  DiagnosticSpec(message: "Expected '}' to end class"),
+                ])
+    AssertParse("class B<#^DIAG_1^#where g#^DIAG_2^#",
+                diagnostics: [
+                  DiagnosticSpec(locationMarker: "DIAG_1", message: "Expected '>' to end generic parameter clause"),
+                  DiagnosticSpec(locationMarker: "DIAG_2", message: "Expected '=' in same type requirement"),
+                  DiagnosticSpec(locationMarker: "DIAG_2", message: "Expected '{' to start class"),
+                  DiagnosticSpec(locationMarker: "DIAG_2", message: "Expected '}' to end class"),
+                ])
   }
 
   func testActorParsing() {
@@ -669,7 +683,7 @@ final class DeclarationTests: XCTestCase {
 
   func testDontRecoverFromUnbalancedParens() {
     AssertParse(
-      "func foo(first second #^COLON^#[third #^RSQUARE_COLON^#fourth#^EXTRANEOUS^#: Int) {}",
+      "func foo(first second #^COLON^#[third #^END_ARRAY^#fourth: Int) {}",
       substructure: Syntax(FunctionParameterSyntax(
         attributes: nil,
         firstName: TokenSyntax.identifier("first"),
@@ -686,9 +700,8 @@ final class DeclarationTests: XCTestCase {
       )),
       diagnostics: [
         DiagnosticSpec(locationMarker: "COLON", message: "Expected ':' in function parameter"),
-        DiagnosticSpec(locationMarker: "RSQUARE_COLON" , message: "Expected ']' to end array type"),
-        DiagnosticSpec(locationMarker: "RSQUARE_COLON", message: "Expected ')' to end parameter clause"),
-        DiagnosticSpec(locationMarker: "EXTRANEOUS", message: "Extraneous ': Int) {}' at top level")
+        DiagnosticSpec(locationMarker: "END_ARRAY" , message: "Expected ']' to end array type"),
+        DiagnosticSpec(locationMarker: "END_ARRAY", message: "Unexpected text 'fourth: Int' found in parameter clause")
       ]
     )
   }
@@ -715,6 +728,24 @@ final class DeclarationTests: XCTestCase {
         DiagnosticSpec(locationMarker: "EXTRANEOUS", message: "Extraneous ': Int) {}' at top level")
       ]
     )
+  }
+  
+  func testMalforedStruct() {
+    AssertParse(
+      """
+      struct n#^OPENINGBRACES^##if@#^ENDIF^##^CLOSINGBRACES^#
+      """,
+      diagnostics: [
+        DiagnosticSpec(locationMarker: "OPENINGBRACES", message: "Expected '{' to start struct"),
+        DiagnosticSpec(locationMarker: "ENDIF", message: "Expected '#endif' in conditional compilation block"),
+        DiagnosticSpec(locationMarker: "CLOSINGBRACES", message: "Expected '}' to end struct")
+      ]
+    )
+  }
+
+  func testDeinitializers() {
+    AssertParse("deinit {}", { $0.parseDeinitializerDeclaration(.empty) })
+    AssertParse("deinit", { $0.parseDeinitializerDeclaration(.empty) })
   }
 }
 
